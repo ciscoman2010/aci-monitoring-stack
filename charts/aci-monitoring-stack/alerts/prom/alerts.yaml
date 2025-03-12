@@ -8,3 +8,181 @@ groups:
         annotations:
           description: 'BGP Received Path high churn detected: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, Peer: {{ $labels.peer_ip}}, VRF: {{ $labels.vrf}}. The churn is {{ $value }} routes per second.'
           summary: 'BGP Received Path high churn detected'
+
+      - alert: BGP Peer Down
+        expr: aci_bgp_peer_state{state="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'BGP Peer Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, Peer: {{ $labels.peer_ip}}. This may impact connectivity.'
+          summary: 'BGP peer down, critical alert'
+
+      - alert: High CPU Usage
+        expr: aci_cpu_usage{device="leaf"} > 90
+        labels:
+          severity: critical
+        annotations:
+          description: 'High CPU Usage detected: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. CPU usage is {{ $value }}%.'
+          summary: 'High CPU usage'
+
+      - alert: High Memory Usage
+        expr: aci_memory_usage{device="leaf"} > 90
+        labels:
+          severity: critical
+        annotations:
+          description: 'High Memory Usage detected: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. Memory usage is {{ $value }}%.'
+          summary: 'High memory usage'
+
+      - alert: Interface Down
+        expr: aci_interface_oper_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'Interface Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, Interface: {{ $labels.interface}}. This interface is down and may affect traffic flow.'
+          summary: 'Interface is down'
+
+      - alert: Interface Flapping
+        expr: abs(deriv(aci_interface_state_changes{state="up"}[2m])) > 5
+        labels:
+          severity: warning
+        annotations:
+          description: 'Interface Flapping detected: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, Interface: {{ $labels.interface}}. There have been {{ $value }} state changes in the last 2 minutes.'
+          summary: 'Interface is flapping'
+
+      - alert: ACI Fabric Health Degraded
+        expr: aci_fabric_health{health="degraded"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'ACI Fabric Health Degraded: Fabric: {{ $labels.fabric }}. The fabric health is degraded. Immediate action required.'
+          summary: 'Fabric health degraded'
+
+      - alert: ACI Fabric Inconsistent Health
+        expr: aci_fabric_health{health="inconsistent"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'ACI Fabric Inconsistent Health: Fabric: {{ $labels.fabric }}. The fabric health is inconsistent. Check nodes for issues.'
+          summary: 'Fabric health inconsistent'
+
+      - alert: ACI Leaf Node Not Responding
+        expr: aci_node_status{status="not-responding"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'ACI Leaf Node Not Responding: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. The leaf node is not responding.'
+          summary: 'Leaf node not responding'
+
+      - alert: ACI Spine Node Not Responding
+        expr: aci_node_status{status="not-responding", node_type="spine"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'ACI Spine Node Not Responding: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. The spine node is not responding.'
+          summary: 'Spine node not responding'
+
+      - alert: ACI L3Out Down
+        expr: aci_l3out_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'ACI L3Out Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. Layer 3 out connection is down.'
+          summary: 'L3Out down'
+
+      - alert: ACI APIC Unreachable
+        expr: aci_apic_status{status="unreachable"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'APIC Unreachable: Fabric: {{ $labels.fabric }}. The APIC is unreachable, which may cause management issues.'
+          summary: 'APIC unreachable'
+
+      - alert: ACI EPG Connectivity Issues
+        expr: aci_epg_connectivity_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'EPG Connectivity Issues: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, EPG: {{ $labels.epg }}. There are connectivity issues with the EPG.'
+          summary: 'EPG connectivity down'
+
+      - alert: ACI VLAN Mismatch Detected
+        expr: aci_vlan_mismatch{status="detected"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'VLAN Mismatch Detected: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. VLAN configuration mismatch detected.'
+          summary: 'VLAN mismatch detected'
+
+      # New Alerts Added Below
+
+      - alert: PortChannel Down
+        expr: aci_portchannel_oper_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'PortChannel Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, PortChannel: {{ $labels.portchannel }}. The port channel is down, traffic may be impacted.'
+          summary: 'PortChannel down'
+
+      - alert: PortChannel Member Down
+        expr: aci_portchannel_member_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'PortChannel Member Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, PortChannel: {{ $labels.portchannel }}, Interface: {{ $labels.interface }}. A member of the port channel is down.'
+          summary: 'PortChannel member down'
+
+      - alert: VPC Peer Down
+        expr: aci_vpc_peer_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'VPC Peer Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, VPC Peer: {{ $labels.vpc_peer }}. VPC peer is down, redundancy may be impacted.'
+          summary: 'VPC peer down'
+
+      - alert: VPC Misconfiguration
+        expr: aci_vpc_misconfiguration{status="detected"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'VPC Misconfiguration Detected: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, VPC: {{ $labels.vpc }}. A misconfiguration is detected on the VPC, which may lead to instability.'
+          summary: 'VPC misconfiguration detected'
+
+      - alert: Interface Error Threshold Exceeded
+        expr: aci_interface_errors{device="leaf"} > 1000
+        labels:
+          severity: warning
+        annotations:
+          description: 'Interface Error Threshold Exceeded: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, Interface: {{ $labels.interface }}. The interface has exceeded error threshold with {{ $value }} errors.'
+          summary: 'Interface error threshold exceeded'
+
+      - alert: Node Going Down
+        expr: aci_node_status{status="going-down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'Node Going Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. The node is in a going-down state and may soon become unreachable.'
+          summary: 'Node going down'
+
+      - alert: Node Memory Issues
+        expr: aci_node_memory{memory_usage_percentage>90} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'Node Memory Issues: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. The node is experiencing high memory usage (greater than 90%).'
+          summary: 'Node memory issues'
+
+      - alert: Interface Administrative Shutdown
+        expr: aci_interface_admin_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'Interface Administrative Shutdown: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}, Interface: {{ $labels.interface }}. The interface is administratively down and may require manual intervention.'
+          summary: 'Interface administratively shut down'
+
+      - alert: VPC Peer Link Down
+        expr: aci_vpc_peer_link_status{status="down"} == 1
+        labels:
+          severity: critical
+        annotations:
+          description: 'VPC Peer Link Down: Fabric: {{ $labels.fabric }}, Node: {{ $labels.nodeid }}. The VPC peer link is down, which may impact redundancy and traffic flow.'
+          summary: 'VPC peer link down'
