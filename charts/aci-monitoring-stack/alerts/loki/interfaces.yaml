@@ -10,6 +10,7 @@ groups:
         annotations:
           summary: Fabric Interface Down
           description: Fabric Interface `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` Went Down
+
       - alert: EPG Interface Down
         expr: |
           (sum by (fabric, switch,interface)(count_over_time({job="aci-monitoring-stack"} |= `[F0532][soaking]` |= `[sys/phys-` | regexp ".+phys-\\[(?P<interface>[^\\]]+)\\]/"[1m])) > 1)
@@ -19,6 +20,7 @@ groups:
         annotations:
           summary: EPG Interface Down
           description: EPG Interface `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` Went Down
+
       - alert: vPC Down
         expr: |
           (sum by (fabric, switch,interface)(count_over_time({job="aci-monitoring-stack"} |= `[F1296][soaking]` | regexp ".+vPC (?P<interface>.+) is"[1m])) > 1)
@@ -28,6 +30,7 @@ groups:
         annotations:
           summary: vPC Down
           description: EPG Port-Channel `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` Went Down
+
       - alert: Interface Up
         expr: |
           (sum by (fabric, switch,interface)(count_over_time({job="aci-monitoring-stack"} |= "[E4205125]" |= `[sys/phys-` | regexp ".+phys-\\[(?P<interface>[^\\]]+)\\]/"[1m])) > 1)
@@ -37,6 +40,7 @@ groups:
         annotations:
           summary: Interface Up
           description: Interface `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` Went Up
+
       - alert: vPC Up
         expr: |
           (sum by (fabric, switch,interface)(count_over_time({job="aci-monitoring-stack"} |= `[E4205113]` | regexp ".+vPC (?P<interface>.+) is"[1m])) > 1)
@@ -46,8 +50,79 @@ groups:
         annotations:
           summary: vPC Up
           description: Interface `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` Went Up
+
       - record: aci_interfaces_down_count1m
         expr: |
-          (sum by (fabric, switch,interface)(count_over_time({job="aci-monitoring-stack"} |= `[F1394][soaking]` or `[F0532][soaking]` [1m])))
+          (sum by (fabric, switch,interface)(count_over_time({job="aci-monitoring-stack"} |= `[F1394][soaking]` or `[F0532][soaking]` [1m])) > 0)
         labels:
           test: "record"
+
+      # New Alerts Added Below
+
+      - alert: Interface Errors Exceeding Threshold
+        expr: |
+          (sum by (fabric, switch, interface)(rate(aci_interface_errors{job="aci-monitoring-stack"}[5m]))) > 1000
+        labels:
+          severity: critical
+        annotations:
+          summary: Interface Errors Exceeding Threshold
+          description: 'Interface `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` is experiencing more than 1000 errors in the last 5 minutes.'
+        
+      - alert: PortChannel Member Down
+        expr: |
+          (sum by (fabric, switch, portchannel)(count_over_time({job="aci-monitoring-stack"} |= `[F1296][soaking]` | regexp ".+port-channel (?P<portchannel>.+) is down"[1m])) > 1)
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: PortChannel Member Down
+          description: 'Port-Channel `{{ $labels.portchannel }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` has a member interface down.'
+
+      - alert: PortChannel Down
+        expr: |
+          (sum by (fabric, switch, portchannel)(count_over_time({job="aci-monitoring-stack"} |= `[F1394][soaking]` | regexp ".+port-channel (?P<portchannel>.+) is down"[1m])) > 1)
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: PortChannel Down
+          description: 'Port-Channel `{{ $labels.portchannel }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` Went Down.'
+
+      - alert: Interface Administrative Shutdown
+        expr: |
+          (sum by (fabric, switch, interface)(count_over_time({job="aci-monitoring-stack"} |= `[F1394][soaking]` | regexp ".+phys-\\[(?P<interface>[^\\]]+)\\]/admin-down"[1m])) > 1)
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: Interface Administrative Shutdown
+          description: 'Interface `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` is administratively shutdown.'
+
+      - alert: vPC Peer Link Down
+        expr: |
+          (sum by (fabric, switch, vpc)(count_over_time({job="aci-monitoring-stack"} |= `[F1296][soaking]` | regexp ".+vPC (?P<vpc>.+) peer link down"[1m])) > 1)
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: vPC Peer Link Down
+          description: 'vPC Peer Link `{{ $labels.vpc }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` is down.'
+
+      - alert: PortChannel Misconfiguration Detected
+        expr: |
+          (sum by (fabric, switch, portchannel)(count_over_time({job="aci-monitoring-stack"} |= `[F1384][soaking]` | regexp ".+port-channel misconfiguration"[1m])) > 1)
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: PortChannel Misconfiguration Detected
+          description: 'Port-Channel `{{ $labels.portchannel }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` is misconfigured.'
+
+      - alert: Interface Throughput Exceeds Threshold
+        expr: |
+          (sum by (fabric, switch, interface)(rate(aci_interface_in_octets{job="aci-monitoring-stack"}[5m]))) > 1000000000
+        labels:
+          severity: warning
+        annotations:
+          summary: Interface Throughput Exceeds Threshold
+          description: 'Interface `{{ $labels.interface }}` on switch `{{ $labels.switch }}` in Fabric `{{ $labels.fabric }}` has throughput exceeding 1Gbps in the last 5 minutes.'
